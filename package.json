@@ -1,32 +1,29 @@
 {
-  "name": "@jmlion/vue-auth",
-
-  "description": "Vue.js token based authentication plugin. Supports simple token based and Json Web Tokens (JWT) authentication.",
-  
-  "keywords": ["vue", "vue.js", "jwt", "auth", "authentication", "plugin", "json", "web", "token"],
-
-  "author": {
-    "name": "Jmlion",
-    "url": "",
-    "username": "jmlion",
-    "email": "jmlion@gmail.com"
-  },
-  
-  "main": "src/index.js",
-  
+  "name": "vue-auth",
   "version": "1.0.0",
-  
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jmlion/vue-auth"
-  },
-  
-  "licenses": "MIT, GPL",
-  
-  "dependencies": {
+  "description": "Vue.js token based authentication plugin. Supports simple token based and Json Web Tokens (JWT) authentication.",
+  "main": "webpack.config.js",
+  "scripts": {
     
   },
-  
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmlion/vue-auth.git"
+  },
+  "keywords": [
+    "vue",
+    "vue.js",
+    "jwt",
+    "auth",
+    "authentication",
+    "token",
+    "passport"
+  ],
+  "author": "jmlion",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jmlion/vue-auth/issues"
+  },
   "devDependencies": {
     "babel-core": "6.16.0",
     "babel-loader": "6.2.5",
@@ -52,4 +49,5 @@
     "axios": "0.15.3",
     "vue-axios": "1.2.2"
   },
+  "homepage": "https://github.com/jmlion/vue-auth#readme"
 }
