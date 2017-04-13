@@ -45,7 +45,7 @@
     "copy-webpack-plugin": "3.0.1",
     "replace-webpack-plugin": "0.1.2",
     
-    "@jmlion/vue-auth": "1.0.0",
+    "@jmlion/vue-auth": "https://github.com/jmlion/vue-auth.git",
     "axios": "0.15.3",
     "vue-axios": "1.2.2"
   },
