@@ -2,7 +2,7 @@
   "name": "@jmlion/vue-auth",
   "version": "1.0.0",
   "description": "Vue.js token based authentication plugin. Supports simple token based and Json Web Tokens (JWT) authentication.",
-  "main": "webpack.config.js",
+  "main": "src/index.js",
   "scripts": {
     
   },
@@ -23,6 +23,9 @@
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/jmlion/vue-auth/issues"
+  },
+  "dependencies": {
+    
   },
   "devDependencies": {
     "babel-core": "6.16.0",
