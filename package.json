@@ -1,5 +1,5 @@
 {
-  "name": "vue-auth",
+  "name": "@jmlion/vue-auth",
   "version": "1.0.0",
   "description": "Vue.js token based authentication plugin. Supports simple token based and Json Web Tokens (JWT) authentication.",
   "main": "webpack.config.js",
