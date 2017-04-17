@@ -2,7 +2,7 @@ module.exports = {
 
     _init: function () {
         if ( ! this.options.Vue.router) {
-            return 'vue-router.2.x.js : Vue.router must be set.';
+            return 'vue-router.js : Vue.router es necesario.';
         }
     },
 
@@ -28,20 +28,17 @@ module.exports = {
         this.options.Vue.router.beforeEach(function (transition, location, next) {
             routerBeforeEach.call(_this, function () {
                 var auth;
-
                 if (transition.to) {
                     auth = transition.to.auth;
                 } else {
                     var authRoutes = transition.matched.filter(function (route) {
                         return route.meta.hasOwnProperty('auth');
                     });
-
                     // matches the nested route, the last one in the list
                     if (authRoutes.length) {
                         auth = authRoutes[authRoutes.length - 1].meta.auth;
                     }
                 }
-
                 transitionEach.call(_this, transition, auth, function (redirect) {
                     if (!redirect) {
                         (next || transition.next)();

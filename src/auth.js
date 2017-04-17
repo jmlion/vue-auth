@@ -15,7 +15,6 @@ module.exports = function () {
             success = data.success;
 
         data = __utils.extend(this.options[methodName + 'Data'], [data]);
-
         data.success = function (res) {
             data.success = success;
 
@@ -34,7 +33,7 @@ module.exports = function () {
     // Overrideable
 
     function _checkAuthenticated(cb) {
-        if (this.watch.authenticated === null && __token.get.call(this)) {
+        if (this.watch.authenticated === null && __token.get.call(this, 'access')) {
             if ( ! __cookie.exists.call(this)) {
                 this.options.logoutProcess.call(this, null, {});
 
@@ -57,7 +56,7 @@ module.exports = function () {
     function _routerBeforeEach(cb) {
         var _this = this;
 
-        if (this.watch.authenticated && !__token.get.call(this)) {
+        if (this.watch.authenticated && !__token.get.call(this, 'access')) {
             this.options.logoutProcess.call(this, null, {});
         }
 
@@ -65,18 +64,22 @@ module.exports = function () {
             this.options.refreshPerform.call(this, {
                 success: function () {
                     this.options.checkAuthenticated.call(_this, cb);
+                },
+                error: function () {
+                    _this.options.logoutProcess.call(_this, null, {});
+                    _checkAuthenticated.call(_this, cb);
                 }
             });
 
             return;
         }
-
+        
         _checkAuthenticated.call(this, cb);
     }
 
     function _transitionEach(transition, routeAuth, cb) {
         routeAuth = __utils.toArray(routeAuth);
-        
+
         __transitionPrev = __transitionThis;
         __transitionThis = transition;
         
@@ -86,7 +89,7 @@ module.exports = function () {
                 cb.call(this, this.options.authRedirect);
             }
             else if (routeAuth.constructor === Array && ! __utils.compare(routeAuth, this.watch.data[this.options.rolesVar])) {
-                __transitionRedirecType = 403;
+                __transitionRedirecType = null;
                 cb.call(this, this.options.forbiddenRedirect);
             }
             else {
@@ -98,7 +101,7 @@ module.exports = function () {
         }
         else if (routeAuth === false && this.check()) {
             __transitionRedirecType = 404;
-            cb.call(this, this.options.notFoundRedirect);
+            cb.call(this, this.options.loginRedirect);
         }
         else {
             this.watch.redirect = __transitionRedirecType ? {type: __transitionRedirecType, from: __transitionPrev, to: __transitionThis} : null;
@@ -109,7 +112,7 @@ module.exports = function () {
     }
 
     function _requestIntercept(req) {
-        var token = __token.get.call(this);
+        var token = __token.get.call(this, 'access');
 
         if (token) {
             this.options.auth.request.call(this, req, token);
@@ -119,25 +122,21 @@ module.exports = function () {
     }
 
     function _responseIntercept(res) {
-        var token;
+        var token_data = [];
 
         if (this.watch.authenticated && this.options.http._invalidToken) {
             this.options.http._invalidToken.call(this, res);
         }
 
-        token = this.options.auth.response.call(this, res);
+        token_data = this.options.auth.response.call(this, res);
 
-        if (token) {
-            __token.set.call(this, null, token);
+        if (token_data) {
+            __token.set.call(this, null, token_data);
         }
     }
 
     function _parseUserData(data) {
         return data.data || {};
-    }
-
-    function _parseOauthState(data) {
-        return JSON.parse(decodeURIComponent(data));
     }
 
     function _check(role) {
@@ -153,7 +152,17 @@ module.exports = function () {
     }
 
     function _tokenExpired () {
-        return ! this.watch.loaded && __token.get.call(this);
+        if(!__token.get.call(this, 'expires_in')){
+            __token.delete.call(this, 'refresh');
+            __token.delete.call(this, 'access');
+            return true;
+        }
+
+        if(__token.get.call(this, 'expires_in') <= Math.floor(Date.now()/1000)){
+            return true;
+        }
+
+        return ! this.watch.loaded && __token.get.call(this, 'access');
     }
 
     function _cookieDomain () {
@@ -189,11 +198,16 @@ module.exports = function () {
         this.watch.data = this.options.parseUserData.call(this, this.options.http._httpData.call(this, res));
         
         this.watch.loaded = true;
-
         if (data.success) { data.success.call(this, res); }
     }
 
     function _refreshPerform(data) {
+        if(__token.get.call(this, 'refresh')){
+            data.data = {
+                refresh_token: __token.get.call(this, 'refresh')
+            }    
+        }
+
         __duckPunch.call(this, 'refresh', data);
     }
 
@@ -258,8 +272,9 @@ module.exports = function () {
     function _logoutProcess(res, data) {
         __cookie.delete.call(this);
 
-        __token.delete.call(this, 'other');
-        __token.delete.call(this, 'default');
+        __token.delete.call(this, 'access_token');
+        __token.delete.call(this, 'expires_in_token');
+        __token.delete.call(this, 'refresh_token');
 
         this.watch.authenticated = false;
         this.watch.data = null;
@@ -271,184 +286,66 @@ module.exports = function () {
         }
     }
 
-    function _loginOtherPerform(data) {
-        var success,
-            token = this.token.call(this); // (admin) token
-
-        data = data || {};
-
-        success = data.success;
-
-        data.success = function () {
-
-            // Reshuffle tokens here...
-            __token.set.call(this, 'other', this.token.call(this));
-            __token.set.call(this, 'default', token);
-
-            if (success) { success.call(this); }
-        };
-
-        __duckPunch.call(this, 'loginOther', data);
-    }
-
-    function _loginOtherProcess(res, data) {
-        var _this = this;
-
-        this.options.fetchPerform.call(this, {
-            success: function () {
-                if (data.success) { data.success.call(this, res); }
-
-                if (data.redirect && _this.options.check.call(_this)) {
-                    _this.options.router._routerGo.call(_this, data.redirect);
-                }
-            }
-        });
-    }
-
-    function _logoutOtherPerform(data) {
-        data = __utils.extend(this.options.logoutOtherData, [data || {}]);
-
-        if (data.makeRequest) {
-            __duckPunch.call(this, 'logoutOther', data);
-        }
-        else {
-            this.options.logoutOtherProcess.call(this, null, data);
-        }
-    }
-
-    function _logoutOtherProcess(res, data) {
-        __token.delete.call(this, 'other');
-
-        this.options.fetchPerform.call(this, {
-            success: function () {
-                if (data.success) { data.success.call(this, res, data); }
-
-                if (data.redirect) {
-                    this.options.router._routerGo.call(this, data.redirect);
-                }
-            }
-        });
-    }
-
-    function _oauth2Perform(data) {
-        var state = {},
-            params = '',
-            query = {};
-
-        if (data.code === true) {
-            data = __utils.extend(this.options[data.provider + 'Data'], [data]);
-
-            try {
-                if (data.query.state) {
-                    state = this.options.parseOauthState(data.query.state);
-                }
-            }
-            catch (e) {
-                console.error('vue-auth:error There was an issue retrieving the state data.');
-                state = {};
-            }
-
-            data.rememberMe = state.rememberMe === true;
-            data.state = state;
-
-            this.options.loginPerform.call(this, data);
-        } else {
-            data = __utils.extend(this.options[data.provider + 'Oauth2Data'], [data]);
-
-            data.redirect = data.redirect.call(this);
-
-            data.state = data.state || {};
-            data.state.rememberMe = data.rememberMe === true;
-
-            params = '?client_id=' + data.clientId + '&redirect_uri=' + data.redirect + '&scope=' + data.scope + '&response_type=code&state=' + encodeURIComponent(JSON.stringify(data.state));
-
-            window.location = data.url + params;
-        }
-    }
-
     var defaultOptions = {
 
         // Variables
-
         rolesVar:          'roles',
-        tokenName:         'auth-token',
+        tokenName:         'token',
 
         // Objects
-
+        loginRedirect:      {path: '/dashboard'},
         authRedirect:       {path: '/login'},
         forbiddenRedirect:  {path: '/403'},
         notFoundRedirect:   {path: '/404'},
-
-        registerData:       {url: 'auth/register',     method: 'POST', redirect: '/login'},
-        loginData:          {url: 'auth/login',        method: 'POST', redirect: '/', fetchUser: true},
-        logoutData:         {url: 'auth/logout',       method: 'POST', redirect: '/', makeRequest: false},
-        oauth1Data:         {url: 'auth/login',        method: 'POST'},
-        fetchData:          {url: 'auth/user',         method: 'GET', enabled: true},
-        refreshData:        {url: 'auth/refresh',      method: 'GET', enabled: true, interval: 30},
-        loginOtherData:     {url: 'auth/login-other',  method: 'POST', redirect: '/'},
-        logoutOtherData:    {url: 'auth/logout-other', method: 'POST', redirect: '/admin', makeRequest: false},
-
-        facebookData:       {url: 'auth/facebook',     method: 'POST', redirect: '/'},
-        googleData:         {url: 'auth/google',       method: 'POST', redirect: '/'},
-
-        facebookOauth2Data: {
-            url: 'https://www.facebook.com/v2.5/dialog/oauth',
-            redirect: function () { return this.options.getUrl() + '/login/facebook'; },
-            clientId: '',
-            scope: 'email'
+        registerData:       {url: 'auth/register', method: 'POST', redirect: '/login'},
+        loginData:          {
+            data: {
+                grant_type: 'password'
+            },
+            url: 'oauth/token', 
+            method: 'POST', 
+            redirect: '/dashboard', 
+            fetchUser: true
         },
-        googleOauth2Data: {
-            url: 'https://accounts.google.com/o/oauth2/auth',
-            redirect: function () { return this.options.getUrl() + '/login/google'; },
-            clientId: '',
-            scope: 'https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/plus.login https://www.googleapis.com/auth/plus.profile.emails.read'
+        logoutData:         {url: 'logout',     method: 'POST', redirect: '/', makeRequest: true},
+        fetchData:          {url: 'userinfo',   method: 'GET', enabled: true},
+        refreshData:        {
+            data: {
+                grant_type: 'refresh_token'
+            },
+            url: 'oauth/token', 
+            method: 'POST', 
+            enabled: true
         },
 
         // Internal
-
         getUrl:             _getUrl,
         cookieDomain:       _cookieDomain,
         parseUserData:      _parseUserData,
-        parseOauthState:    _parseOauthState,
         tokenExpired:       _tokenExpired,
         check:              _check,
         checkAuthenticated: _checkAuthenticated,
-
         transitionEach:     _transitionEach,
         routerBeforeEach:   _routerBeforeEach,
         requestIntercept:   _requestIntercept,
         responseIntercept:  _responseIntercept,
 
         // Contextual
-
         registerPerform:    _registerPerform,
         registerProcess:    _registerProcess,
-
         loginPerform:       _loginPerform,
         loginProcess:       _loginProcess,
-
         logoutPerform:      _logoutPerform,
         logoutProcess:      _logoutProcess,
-
         fetchPerform:       _fetchPerform,
         fetchProcess:       _fetchProcess,
-
         refreshPerform:     _refreshPerform,
         refreshProcess:     _refreshProcess,
-
-        loginOtherPerform:  _loginOtherPerform,
-        loginOtherProcess:  _loginOtherProcess,
-
-        logoutOtherPerform: _logoutOtherPerform,
-        logoutOtherProcess: _logoutOtherProcess,
-
-        oauth2Perform:      _oauth2Perform
     };
 
     function Auth(Vue, options) {
+
         var i, ii, msg, drivers = ['auth', 'http', 'router'];
-        
-        this.currentToken = null;
 
         this.options = __utils.extend(defaultOptions, [options || {}]);
         this.options.Vue = Vue;
@@ -464,10 +361,10 @@ module.exports = function () {
             }
         });
 
-        // Check drivers.
+        // Comprobamos los drivers 
         for (i = 0, ii = drivers.length; i < ii; i++) {
             if ( ! this.options[drivers[i]]) {
-                console.error('Error (@websanova/vue-auth): "' + drivers[i] + '" driver must be set.');
+                console.error('No se encuentra el driver ' + drivers[i] + ' requerido por (@jmlion/vue-auth): "');
                 return;
             }
 
@@ -475,19 +372,10 @@ module.exports = function () {
                 msg = this.options[drivers[i]]._init.call(this);
 
                 if (msg) {
-                    console.error('Error (@websanova/vue-auth): ' + msg);
+                    console.error('Error (@jmlion/vue-auth): ' + msg);
                     return;
                 }
             }
-        }
-
-        // Set refresh interval.
-        if (this.options.refreshData.interval && this.options.refreshData.interval > 0) {
-            setInterval(function () {
-                if (this.options.refreshData.enabled && !this.options.tokenExpired.call(this)) {
-                    this.options.refreshPerform.call(this, {});
-                }
-            }.bind(this), this.options.refreshData.interval * 1000 * 60); // In minutes.
         }
 
         // Init interceptors.
@@ -515,24 +403,6 @@ module.exports = function () {
         return this.options.check.call(this, role);
     };
 
-    Auth.prototype.other = function () {
-        this.watch.data; // To fire watch
-
-        return __token.get.call(this, 'other') ? true : false;
-    };
-
-    Auth.prototype.enableOther = function (data) {
-        if (this.other()) {
-            this.currentToken = null;
-        }
-    };
-
-    Auth.prototype.disableOther = function (data) {
-        if (this.other()) {
-            this.currentToken = 'default';
-        }
-    };
-
     Auth.prototype.token = function (name) {
         return __token.get.call(this, name);
     };
@@ -556,18 +426,6 @@ module.exports = function () {
     Auth.prototype.logout = function (data) {
         __bindContext.call(this, 'logout', data);
     };
-
-    Auth.prototype.loginOther = function (data) {
-        __bindContext.call(this, 'loginOther', data);
-    };
-
-    Auth.prototype.logoutOther = function (data) {
-        __bindContext.call(this, 'logoutOther', data);
-    };
-
-    Auth.prototype.oauth2 = function (data) {
-        __bindContext.call(this, 'oauth2', data);
-    }    
 
     return Auth;
 };

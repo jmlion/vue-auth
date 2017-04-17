@@ -5,13 +5,18 @@ module.exports = {
     },
     
     response: function (res) {
-        var headers = this.options.http._getHeaders.call(this, res),
-            token = headers.Authorization || headers.authorization;
+        var data = this.options.http._httpData.call(this, res)
+        var token_data = [];
 
-        if (token) {
-            token = token.split(/Bearer\:?\s?/i);
-            
-            return token[token.length > 1 ? 1 : 0].trim();
+        if(data.access_token){
+            token_data['access_token'] = data.access_token.trim();
+            token_data['refresh_token'] = data.refresh_token.trim();
+            token_data['expires_in'] = data.expires_in;
+        }
+
+        
+        if (token_data) {
+          return token_data;
         }
     }
 };

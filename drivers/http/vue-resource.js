@@ -2,7 +2,7 @@ module.exports = {
 
     _init: function () {
         if ( ! this.options.Vue.http) {
-            return 'vue-resource.1.x.js : Vue.http must be set.';
+            return 'vue-resource..js : Vue.http es requerido.';
         }
     },
     
