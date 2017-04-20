@@ -20,6 +20,27 @@
         }
       },
       "/Users/jesus.santos/Sites/cuidame.es.admin"
+    ],
+    [
+      {
+        "raw": "git+https://github.com/jmlion/vue-auth.git",
+        "scope": null,
+        "escapedName": null,
+        "name": null,
+        "rawSpec": "git+https://github.com/jmlion/vue-auth.git",
+        "spec": "git+https://github.com/jmlion/vue-auth.git",
+        "type": "hosted",
+        "hosted": {
+          "type": "github",
+          "ssh": "git@github.com:jmlion/vue-auth.git",
+          "sshUrl": "git+ssh://git@github.com/jmlion/vue-auth.git",
+          "httpsUrl": "git+https://github.com/jmlion/vue-auth.git",
+          "gitUrl": "git://github.com/jmlion/vue-auth.git",
+          "shortcut": "github:jmlion/vue-auth",
+          "directUrl": "https://raw.githubusercontent.com/jmlion/vue-auth/master/package.json"
+        }
+      },
+      "/Users/jesus.santos/Sites/cuidame.es.admin"
     ]
   ],
   "_from": "git+https://github.com/jmlion/vue-auth.git",
@@ -28,10 +49,10 @@
   "_location": "/@jmlion/vue-auth",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "@jmlion/vue-auth@git+https://github.com/jmlion/vue-auth.git",
-    "scope": "@jmlion",
-    "escapedName": "@jmlion%2fvue-auth",
-    "name": "@jmlion/vue-auth",
+    "raw": "git+https://github.com/jmlion/vue-auth.git",
+    "scope": null,
+    "escapedName": null,
+    "name": null,
     "rawSpec": "git+https://github.com/jmlion/vue-auth.git",
     "spec": "git+https://github.com/jmlion/vue-auth.git",
     "type": "hosted",
@@ -46,12 +67,13 @@
     }
   },
   "_requiredBy": [
+    "#USER",
     "/"
   ],
-  "_resolved": "git+https://github.com/jmlion/vue-auth.git#068bf69aaf946dbdb9e860953cc6efc8ded80275",
-  "_shasum": "085e0f96e417c3cd1eae8864b70fc8c2b24e0104",
+  "_resolved": "git+https://github.com/jmlion/vue-auth.git#500f3bf80977aab998abe0b27de9579760d72a9f",
+  "_shasum": "f605f7816724ac10cef1b122ffee47ca49cc3fd1",
   "_shrinkwrap": null,
-  "_spec": "@jmlion/vue-auth@git+https://github.com/jmlion/vue-auth.git",
+  "_spec": "git+https://github.com/jmlion/vue-auth.git",
   "_where": "/Users/jesus.santos/Sites/cuidame.es.admin",
   "author": {
     "name": "jmlion"

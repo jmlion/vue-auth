@@ -88,7 +88,7 @@ module.exports = function () {
                 __transitionRedirecType = 401;
                 cb.call(this, this.options.authRedirect);
             }
-            else if (routeAuth.constructor === Array && ! __utils.compare(routeAuth, this.watch.data[this.options.rolesVar])) {
+            else if (routeAuth.constructor === Array && ! __utils.compare(routeAuth, __utils.oSimple(this.watch.data[this.options.rolesVar].data))) {
                 __transitionRedirecType = null;
                 cb.call(this, this.options.forbiddenRedirect);
             }

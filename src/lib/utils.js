@@ -67,9 +67,20 @@ module.exports = (function (){
         return false;
     }
 
+    function oSimple(myObject){
+        var arr;
+
+        arr = Object.keys(myObject).map(function(key) {
+           return myObject[key].name;
+        });
+
+        return arr;
+    }
+
     return {
         extend: extend,
         toArray: toArray,
-        compare: compare
+        compare: compare,
+        oSimple: oSimple
     };
 })();
